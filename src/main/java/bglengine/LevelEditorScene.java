@@ -1,12 +1,15 @@
 package bglengine;
 
 import constant.Const;
+import org.joml.Vector2f;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL20;
 import renderer.Shader;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import static org.lwjgl.glfw.GLFW.glfwGetTime;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
@@ -15,11 +18,10 @@ public class LevelEditorScene extends Scene {
 	private int vertexID, fragmentID, shaderProgram;
 
 	private static final float[] vertexArray = {
-			// position               // color
-			.5f, -.5f, 0f, 1f, 0f, 0f, 1f,
-			-.5f, .5f, 0f, 0f, 1f, 0f, 1f,
-			.5f, .5f, 0f, 1f, 0f, 1f, 1f,
-			-.5f, -.5f, 0f, 1f, 1f, 0f, 1f,
+			100.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, // Bottom right 0
+			0.5f, 100.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, // Top left     1
+			100.5f, 100.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, // Top right    2
+			0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, // Bottom left  3
 	};
 	private static final int[] elementArray = {
 			2, 1, 0,
@@ -36,6 +38,7 @@ public class LevelEditorScene extends Scene {
 
 	@Override
 	public void init() {
+		this.camera = new Camera(new org.joml.Vector2f(-200, -300));
 		defaultShader = new Shader(Const.SHPT);
 		defaultShader.compile();
 		vaoID = glGenVertexArrays();
@@ -67,13 +70,18 @@ public class LevelEditorScene extends Scene {
 
 	@Override
 	public void update(float dt) {
+		camera.position.x -= dt * 50.0f;
+		camera.position.y -= dt * 20.0f;
+
 		defaultShader.use();
+		defaultShader.uploadMat4f("uProjection", camera.getProjectionMatrix());
+		defaultShader.uploadMat4f("uView", camera.getViewMatrix());
+		defaultShader.uploadFloat("uTime", (float) glfwGetTime());
 		glBindVertexArray(vaoID);
+
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
-
 		glDrawElements(GL_TRIANGLES, elementArray.length, GL_UNSIGNED_INT, 0);
-
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glBindVertexArray(0);
