@@ -20,8 +20,7 @@ public class Shader {
 		this.filepath = filepath;
 		try {
 			String source = new String(Files.readAllBytes(Paths.get(filepath)));
-			String[] splitString =
-					source.split("(" + Const.TYP + ")( )+([" + Const.RNG + Const.RNG.toUpperCase() + "]+)");
+			String[] splitString = source.split("(" + Const.TYP + ")( )+([" + Const.RNG + Const.RNGD + "]+)");
 
 			int index = source.indexOf(Const.TYP) + 6;
 			int eol = source.indexOf(Const.LEND, index);
@@ -61,7 +60,7 @@ public class Shader {
 		int success = glGetShaderi(vertexID, GL_COMPILE_STATUS);
 		if (success == GL_FALSE) {
 			int len = glGetShaderi(vertexID, GL_INFO_LOG_LENGTH);
-			System.out.println("ERROR: '" + filepath + "'\n\tVertex shader compilation failed.");
+			System.out.println(Const.ERR2 + filepath + Const.SPC +"Vertex" + Const.SCF);
 			System.out.println(glGetShaderInfoLog(vertexID, len));
 			assert false : "";
 		}
@@ -73,7 +72,7 @@ public class Shader {
 		success = glGetShaderi(fragmentID, GL_COMPILE_STATUS);
 		if (success == GL_FALSE) {
 			int len = glGetShaderi(fragmentID, GL_INFO_LOG_LENGTH);
-			System.out.println("ERROR: '" + filepath + "'\n\tFragment shader compilation failed.");
+			System.out.println(Const.ERR2 + filepath + Const.SPC +"Fragment" + Const.SCF);
 			System.out.println(glGetShaderInfoLog(fragmentID, len));
 			assert false : "";
 		}
@@ -86,7 +85,7 @@ public class Shader {
 		success = glGetProgrami(shaderProgramID, GL_LINK_STATUS);
 		if (success == GL_FALSE) {
 			int len = glGetProgrami(shaderProgramID, GL_INFO_LOG_LENGTH);
-			System.out.println("ERROR: '" + filepath + "'\n\tLinking of shaders failed.");
+			System.out.println(Const.ERR2 + filepath + "'\n\tLinking of shaders failed.");
 			System.out.println(glGetProgramInfoLog(shaderProgramID, len));
 			assert false : "";
 		}

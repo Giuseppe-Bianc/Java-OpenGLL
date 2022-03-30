@@ -13,7 +13,7 @@ public class Const {
 	public static final String SPC = QT + "\n\t", LEND = "\r\n";
 	public static final String SCF = "shader compilation failed.";
 	public static final String TYP = "#type", VRT = "vertex", FRG = "fragment";
-	public static final String RNG = "a-z", UNT = "Unexpected token " + QT;
+	public static final String RNG = "a-z",RNGD = RNG.toUpperCase(),UNT = "Unexpected token " + QT;
 	public static final String SHPT = PR + "shaders/default.glsl";
 	public static final String PRF = PR + "fonts/Fira Code ";
 	public static final String NRF = "Nerd Font";
