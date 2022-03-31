@@ -16,20 +16,43 @@ import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class Window {
-
-	private final int width, height;
-	private final String title;
-	private static Window window;
+	private int width, height;
+	private String title;
 	private long glfwWindow;
 
 	public float r, g, b, a;
+	private boolean fadeToBlack = false;
+
+	private static Window window = null;
+
 	private static Scene currentScene;
 
-	public Window() {
-		this.width = 960;
-		this.height = 540;
+	private Window() {
+		this.width = 1920;
+		this.height = 1080;
 		this.title = "Mario";
-		this.r = this.g = this.b = this.a = 1;
+		r = 1;
+		b = 1;
+		g = 1;
+		a = 1;
+	}
+
+	public static void changeScene(int newScene) {
+		switch (newScene) {
+			case 0:
+				currentScene = new LevelEditorScene();
+				currentScene.init();
+				currentScene.start();
+				break;
+			case 1:
+				currentScene = new LevelScene();
+				currentScene.init();
+				currentScene.start();
+				break;
+			default:
+				assert false : "Unknown scene '" + newScene + "'";
+				break;
+		}
 	}
 
 	public static Window get() {
@@ -40,20 +63,8 @@ public class Window {
 		return Window.window;
 	}
 
-	public static void changeScene(int newScene) {
-		switch (newScene) {
-			case 0:
-				currentScene = new LevelEditorScene();
-				currentScene.init();
-				break;
-			case 1:
-				currentScene = new LevelScene();
-				currentScene.init();
-				break;
-			default:
-				assert Const.NRM : "Unknown scene '" + newScene + "'";
-				break;
-		}
+	public static Scene getScene() {
+		return get().currentScene;
 	}
 
 	public void run() {
@@ -69,57 +80,69 @@ public class Window {
 		requireNonNull(glfwSetErrorCallback(null)).free();
 	}
 
-	private void init() {
+	public void init() {
 		GLFWErrorCallback.createPrint(System.err).set();
-		if (!glfwInit())
-			throw new IllegalStateException("Unable to initialize GLFW");
 
+		if (!glfwInit()) {
+			throw new IllegalStateException("Unable to initialize GLFW.");
+		}
 		glfwDefaultWindowHints();
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 		glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+
+		// Create the window
 		glfwWindow = glfwCreateWindow(this.width, this.height, this.title, NULL, NULL);
-		if (glfwWindow == NULL)
-			throw new RuntimeException("Failed to create the GLFW window");
+		if (glfwWindow == NULL) {
+			throw new IllegalStateException("Failed to create the GLFW window.");
+		}
 
 		glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
 		glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
 		glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
 		glfwSetKeyCallback(glfwWindow, KeyListener::keyCallback);
 
-		try (MemoryStack st = stackPush()) {
-			IntBuffer pW = st.mallocInt(1);
-			IntBuffer pH = st.mallocInt(1);
+		try (org.lwjgl.system.MemoryStack st = stackPush()) {
+			java.nio.IntBuffer pW = st.mallocInt(1);
+			java.nio.IntBuffer pH = st.mallocInt(1);
 			glfwGetWindowSize(glfwWindow, pW, pH);
-			GLFWVidMode vmd = glfwGetVideoMode(glfwGetPrimaryMonitor());
+			org.lwjgl.glfw.GLFWVidMode vmd = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
 			assert vmd != null;
 			glfwSetWindowPos(glfwWindow, (vmd.width() - pW.get(0)) / 2, (vmd.height() - pH.get(0)) / 2
 			);
 		}
+
 		glfwMakeContextCurrent(glfwWindow);
 		glfwSwapInterval(1);
-
 		glfwShowWindow(glfwWindow);
 		GL.createCapabilities();
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
 		Window.changeScene(0);
 	}
 
-	private void loop() {
-		double beginTime = glfwGetTime(), endTime, dt = -1.0f;
-		GL.createCapabilities();
+	public void loop() {
+		float beginTime = (float) glfwGetTime();
+		float endTime;
+		float dt = -1.0f;
 
 		while (!glfwWindowShouldClose(glfwWindow)) {
+			// Poll events
+			glfwPollEvents();
+
 			glClearColor(r, g, b, a);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClear(GL_COLOR_BUFFER_BIT);
 
 			if (dt >= 0) {
-				currentScene.update((float) dt);
+				currentScene.update(dt);
 			}
 
 			glfwSwapBuffers(glfwWindow);
-			glfwPollEvents();
-			endTime = glfwGetTime();
+
+			endTime = (float) glfwGetTime();
 			dt = endTime - beginTime;
 			beginTime = endTime;
 		}
